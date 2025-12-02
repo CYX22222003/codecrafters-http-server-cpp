@@ -1,0 +1,60 @@
+#pragma once
+#include <string>
+#include <vector>
+#include <unordered_map>
+#include <stdexcept>
+#include "./StringUtils.hpp"
+
+namespace HttpRequest {
+    class RequestLine {
+        public:
+            std::string method;
+            std::string target;
+            std::string version;
+
+            // Constructor
+            RequestLine(const std::string& m = "", const std::string& t = "", const std::string& v = "")
+                : method(m), target(t), version(v) {}
+
+            RequestLine(const std::vector<std::string>& arr) {
+                if (arr.size() != 3) throw std::runtime_error("Request Line must contain three elements");
+                method = arr[0];
+                target = arr[1];
+                version = arr[2];
+            }
+    };
+
+    // Full HTTP request class
+    class HttpRequest {
+        public:
+            RequestLine requestLine;
+            std::unordered_map<std::string, std::string> headers;
+            std::string body;
+
+            // Constructors
+            HttpRequest() = default;
+
+            HttpRequest(const RequestLine& rl,
+                        const std::unordered_map<std::string, std::string>& h = {},
+                        const std::string& b = "")
+                : requestLine(rl), headers(h), body(b) {}
+
+            std::string getHeader(const std::string& name) const {
+                auto it = headers.find(name);
+                return it != headers.end() ? it->second : "";
+            }
+
+            void setHeader(const std::string& name, const std::string& value) {
+                headers[name] = value;
+            }
+
+            void setBody(const std::string& body) {
+                this->body = body;
+            }
+
+            void setRequestLines(const std::string& request_line) {
+                std::vector<std::string> req_line_arr = StringUtils::split(request_line, " ");
+                requestLine = RequestLine(req_line_arr);
+            }
+    };
+}

@@ -8,6 +8,17 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+#include "./HttpStatus.hpp"
+#include "./StringUtils.hpp"
+#include "./HttpRequest.hpp"
+
+HttpRequest::HttpRequest parse_request(std::string &req) {
+  std::vector<std::string> lines = StringUtils::split(req, "\r\n");
+  HttpRequest::HttpRequest httpReq;
+  httpReq.setRequestLines(lines[0]);
+  return httpReq;
+}
+
 int main(int argc, char **argv) {
   // Flush after every std::cout / std::cerr
   std::cout << std::unitbuf;
@@ -53,9 +64,25 @@ int main(int argc, char **argv) {
   std::cout << "Waiting for a client to connect...\n";
   
   while (true) {
+    char buffer[1024];
     int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
+    if (client_fd < 0) {
+        perror("accept failed");
+        close(server_fd);
+        return 1;
+    }
     std::cout << "Client connected\n";
-    const char* response = "HTTP/1.1 200 OK\r\n\r\n";
+
+    ssize_t bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+    buffer[bytes_received] = '\0';
+    std::string data(buffer);
+    HttpRequest::HttpRequest req = parse_request(data);
+    const char* response;
+    if (req.requestLine.target == "/") {
+      response = HttpStatus::OK.c_str();
+    } else {
+      response = HttpStatus::NotFound.c_str();
+    }
     send(client_fd, response, strlen(response), 0);
   }
   close(server_fd);
