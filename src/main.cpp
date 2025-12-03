@@ -14,6 +14,33 @@
 #include "./HttpRequest.hpp"
 #include "./handler.hpp"
 
+bool send_full_response(int client_fd, const std::string& response) {
+    size_t total_sent = 0;
+    size_t to_send = response.size();
+    const char* data = response.data(); // works for both text and binary
+
+    while (total_sent < to_send) {
+        ssize_t sent = send(client_fd, data + total_sent, to_send - total_sent, 0);
+        if (sent > 0) {
+            total_sent += sent;
+        } else if (sent == 0) {
+            // connection closed by client
+            fprintf(stderr, "Connection closed by peer\n");
+            return false;
+        } else {
+            // error
+            if (errno == EINTR || errno == EAGAIN) {
+                // interrupted or temporarily unavailable, try again
+                continue;
+            }
+            perror("send failed");
+            return false;
+        }
+    }
+
+    return true; // all bytes sent
+}
+
 void handle_client(int client_fd, std::string directory) {
   char buffer[1024];
   ssize_t bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
@@ -21,7 +48,7 @@ void handle_client(int client_fd, std::string directory) {
   std::string data(buffer);
   HttpRequest::HttpRequest req = HttpRequest::HttpRequest::parse_request(data);
   std::string response = handler::handle(req, directory);
-  send(client_fd, response.c_str(), strlen(response.c_str()), 0);
+  send_full_response(client_fd, response);
 }
 
 int main(int argc, char **argv) {

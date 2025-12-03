@@ -1,7 +1,8 @@
 #pragma once
 #include<string>
 #include<vector>
-
+#include <iostream>
+#include <iomanip>
 namespace StringUtils {
     std::vector<std::string> split(const std::string &s, const std::string &delimiter) {
         std::vector<std::string> result;
@@ -37,4 +38,13 @@ namespace StringUtils {
                    [](unsigned char c){ return std::tolower(c); });
         return result;
     }
+
+    void print_hex(const std::string& data) {
+        for (unsigned char c : data) {
+            // print each byte as 2-digit hex
+            std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)c << " ";
+        }
+        std::cout << std::dec << std::endl; // reset formatting
+    }
+
 }

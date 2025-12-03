@@ -102,7 +102,8 @@ namespace HttpResponse {
                 std::string compressed_body = Compression::compress_gzip(body);
                 this->set_status(HttpStatus::OK);
                 this->set_header("content-type", "text/plain");
-                this->set_header("content-length", std::to_string(body.size()));
+                this->set_header("content-length", std::to_string(compressed_body.size()));
+                StringUtils::print_hex(compressed_body);
                 this->set_body(compressed_body);
             }
 
