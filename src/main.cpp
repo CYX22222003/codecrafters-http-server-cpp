@@ -60,10 +60,6 @@ void handle_client(int client_fd, std::string directory) {
                 buffer.erase(0, header_end + 4); 
                 expected_length = current_request.getContentLength();
                 headers_parsed = true;
-                if (handler::isClose(current_request)) {
-                  close(client_fd);
-                  return;
-                }
             }
 
             size_t to_take = std::min(expected_length - current_request.body.size(), buffer.size());
@@ -80,6 +76,10 @@ void handle_client(int client_fd, std::string directory) {
             current_request = HttpRequest::HttpRequest();
             headers_parsed = false;
             expected_length = 0;
+            if (handler::isClose(current_request)) {
+              close(client_fd);
+              return;
+            }
         }
     }
     close(client_fd);
