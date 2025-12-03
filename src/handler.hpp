@@ -46,15 +46,15 @@ namespace handler {
             fh.handle_get(is_compressed);
         } else if (std::regex_match(target, match, rules::echo_r)) {
             std::string body = match[1];
-            if (is_compressed) body = Compression::gzip_compress_string(body);
-            httpResponse.write_text_plain(StringUtils::trim(body));
+            if (is_compressed) body = Compression::gzip_compress_string(StringUtils::trim(body));
+            httpResponse.write_text_plain(body);
         } else if (target == "/user-agent") {
             auto headers = req.headers;
             auto it = headers.find("user-agent");
             if (it == headers.end()) throw std::runtime_error("Does not contain User-Agent body");
             std::string body = it->second;
-            if (is_compressed) body = Compression::gzip_compress_string(body);
-            httpResponse.write_text_plain(StringUtils::trim(body));
+            if (is_compressed) body = Compression::gzip_compress_string(StringUtils::trim(body));
+            httpResponse.write_text_plain(body);
         } else {
             httpResponse.set_status(HttpStatus::NotFound);
         }
