@@ -17,8 +17,8 @@ namespace rules {
 }
 
 namespace handler {
-    std::string handle_get(HttpRequest::HttpRequest&, std::string&);
-    std::string handle_post(HttpRequest::HttpRequest&, std::string&);
+    std::string handle_get(HttpRequest::HttpRequest&, std::string&, bool);
+    std::string handle_post(HttpRequest::HttpRequest&, std::string&, bool);
     bool add_compression(HttpRequest::HttpRequest&, HttpResponse::HttpResponse&);
     
     bool isClose(HttpRequest::HttpRequest req) {
@@ -29,7 +29,7 @@ namespace handler {
         return false;
     }
 
-    std::string handle(HttpRequest::HttpRequest req, std::string directory) {
+    std::string handle(HttpRequest::HttpRequest req, std::string directory, bool isClose = false) {
         std::string method = req.requestLine.method;
         if (method == "GET") {
             return handle_get(req, directory);
@@ -40,7 +40,7 @@ namespace handler {
         }
     }
 
-    std::string handle_get(HttpRequest::HttpRequest& req, std::string& directory) {
+    std::string handle_get(HttpRequest::HttpRequest& req, std::string& directory, bool isClose = false) {
         std::smatch match;
         HttpResponse::HttpResponse httpResponse;
         bool is_compressed = add_compression(req, httpResponse);
@@ -73,10 +73,11 @@ namespace handler {
         } else {
             httpResponse.set_status(HttpStatus::NotFound);
         }
+        if (isClose) httpResponse.close_connection();
         return httpResponse.to_string();
     }
 
-    std::string handle_post(HttpRequest::HttpRequest& req, std::string& directory) {
+    std::string handle_post(HttpRequest::HttpRequest& req, std::string& directory, bool isClose = false) {
         std::smatch match;
         HttpResponse::HttpResponse httpResponse;
         bool is_compressed = add_compression(req, httpResponse);
@@ -86,6 +87,7 @@ namespace handler {
             std::string file_name = match[1];
             FileHandler::FileHandler fh(directory, file_name, httpResponse);
             fh.handle_post(req.body);
+            if (isClose) httpResponse.close_connection();
             return httpResponse.to_string();
         } else {
             throw std::runtime_error("Unspecified paths for posting");

@@ -107,6 +107,10 @@ namespace HttpResponse {
                 this->set_body(compressed_body);
             }
 
+            void close_connection() {
+                this->set_header("connection:", "close");
+            }
+
             std::string to_string() const {
                 std::ostringstream oss;
                 oss << status_line;

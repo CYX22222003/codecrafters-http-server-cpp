@@ -70,7 +70,7 @@ void handle_client(int client_fd, std::string directory) {
                 break;
             }
 
-            std::string response = handler::handle(current_request, directory);
+            std::string response = handler::handle(current_request, directory, handler::isClose(current_request));
             send_full_response(client_fd, response);
 
             current_request = HttpRequest::HttpRequest();
