@@ -16,16 +16,30 @@ namespace rules {
 }
 
 namespace handler {
+    std::string handle_get(HttpRequest::HttpRequest, std::string);
+    std::string handle_post(HttpRequest::HttpRequest, std::string);
+
     std::string handle(HttpRequest::HttpRequest req, std::string directory) {
-        HttpResponse::HttpResponse httpResponse;
+        std::string method = req.requestLine.method;
+        if (method == "GET") {
+            return handle_get(req, directory);
+        } else if (method == "POST") {
+            return handle_post(req, directory);
+        } else {
+            throw std::runtime_error("Unknown methods");
+        }
+    }
+
+    std::string handle_get(HttpRequest::HttpRequest req, std::string directory) {
         std::smatch match;
+        HttpResponse::HttpResponse httpResponse;
         std::string target = req.requestLine.target;
         if (target == "/") {
             httpResponse.set_status(HttpStatus::OK);
         } else if (std::regex_match(target, match, rules::files_r)) {
             std::string file_name = match[1];
             FileHandler::FileHandler fh(directory, file_name, httpResponse);
-            fh.handle();
+            fh.handle_get();
         } else if (std::regex_match(target, match, rules::echo_r)) {
             std::string body = match[1];
             httpResponse.write_text_plain(StringUtils::trim(body));
@@ -38,9 +52,20 @@ namespace handler {
         } else {
             httpResponse.set_status(HttpStatus::NotFound);
         }
-        
-        // debug
-        std::cout << StringUtils::showCRLF(httpResponse.to_string()) << std::endl;
         return httpResponse.to_string();
+    }
+
+    std::string handle_post(HttpRequest::HttpRequest req, std::string directory) {
+        std::smatch match;
+        HttpResponse::HttpResponse httpResponse;
+        std::string target = req.requestLine.target;
+        if (std::regex_match(target, match, rules::files_r)) {
+            std::string file_name = match[1];
+            FileHandler::FileHandler fh(directory, file_name, httpResponse);
+            fh.handle_post(req.body);
+            return httpResponse.to_string();
+        } else {
+            throw std::runtime_error("Unspecified paths for posting");
+        }
     }
 }

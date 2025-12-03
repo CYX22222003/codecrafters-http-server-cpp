@@ -23,7 +23,7 @@ namespace FileHandler {
             FileHandler(const std::string& directory, const std::string& path, HttpResponse::HttpResponse& response)
                 : path(path), directory(directory), response(response){}
             
-            void handle() {
+            void handle_get() {
                 std::string full_path = directory + "/" + path;
 
                 if (file_exists(full_path)) {
@@ -43,6 +43,19 @@ namespace FileHandler {
                 } else {
                     response.set_status(HttpStatus::NotFound);
                 }
+            }
+
+            void handle_post(const std::string& content) {
+                std::string full_path = directory + "/" + path;
+                std::ofstream outfile(full_path, std::ios::binary);
+                if (!outfile) {
+                    response.set_status(HttpStatus::NotFound);
+                    response.set_body("Failed to write file");
+                    return;
+                }
+                outfile << content;
+                outfile.close();
+                response.set_status(HttpStatus::Created);
             }
     };
 }
