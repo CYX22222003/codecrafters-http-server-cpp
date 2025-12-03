@@ -32,9 +32,9 @@ namespace handler {
     std::string handle(HttpRequest::HttpRequest req, std::string directory, bool isClose = false) {
         std::string method = req.requestLine.method;
         if (method == "GET") {
-            return handle_get(req, directory);
+            return handle_get(req, directory, isClose);
         } else if (method == "POST") {
-            return handle_post(req, directory);
+            return handle_post(req, directory, isClose);
         } else {
             throw std::runtime_error("Unknown methods");
         }
