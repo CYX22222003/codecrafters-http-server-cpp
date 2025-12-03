@@ -6,7 +6,7 @@
 #include <sys/stat.h> 
 
 #include "./HttpResponse.hpp"
-
+#include "./CompressionUtils.hpp"
 namespace FileHandler {
     class FileHandler {
         private:
@@ -23,7 +23,7 @@ namespace FileHandler {
             FileHandler(const std::string& directory, const std::string& path, HttpResponse::HttpResponse& response)
                 : path(path), directory(directory), response(response){}
             
-            void handle_get() {
+            void handle_get(bool is_compressed=false) {
                 std::string full_path = directory + "/" + path;
 
                 if (file_exists(full_path)) {
@@ -36,6 +36,11 @@ namespace FileHandler {
                     std::stringstream buffer;
                     buffer << infile.rdbuf();
                     std::string file_content = buffer.str();
+                    
+                    if (is_compressed) {
+                        file_content = Compression::gzip_compress_string(file_content);
+                    }
+
                     response.set_status(HttpStatus::OK);
                     response.set_header("Content-Type", "application/octet-stream");
                     response.set_header("Content-Length", std::to_string(file_content.size()));
