@@ -76,8 +76,11 @@ namespace handler {
 
     void add_compression(HttpRequest::HttpRequest& req, HttpResponse::HttpResponse& resp) {
         if (req.headers.find("accept-encoding") != req.headers.end()) {
-            if (StringUtils::trim(req.headers["accept-encoding"]) == "gzip") {
-                resp.set_header("content-encoding", req.headers["accept-encoding"]);
+            auto arr = StringUtils::split(req.headers["accept-encoding"], ",");
+            for (auto s : arr) {
+                if (StringUtils::trim(s) == "gzip") {
+                    resp.set_header("content-encoding", "gzip");
+                }
             }
         }
     }
