@@ -72,14 +72,16 @@ void handle_client(int client_fd, std::string directory) {
 
             std::string response = handler::handle(current_request, directory, handler::isClose(current_request));
             send_full_response(client_fd, response);
-
-            current_request = HttpRequest::HttpRequest();
-            headers_parsed = false;
-            expected_length = 0;
+            
             if (handler::isClose(current_request)) {
               close(client_fd);
               return;
             }
+
+            current_request = HttpRequest::HttpRequest();
+            headers_parsed = false;
+            expected_length = 0;
+            
         }
     }
     close(client_fd);
