@@ -99,7 +99,7 @@ namespace HttpResponse {
             }
 
             void write_compressed_text(const std::string& body) {
-                std::vector<unsigned char> compressed_body = Compression::gzip_compress(body);
+                std::string compressed_body = Compression::compress_gzip(body);
                 this->set_status(HttpStatus::OK);
                 this->set_header("content-type", "text/plain");
                 this->set_header("content-length", std::to_string(compressed_body.size()));

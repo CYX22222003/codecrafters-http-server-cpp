@@ -6,22 +6,25 @@
 
 namespace Compression
 {
-    std::vector<unsigned char> gzip_compress(const std::string& str) {
+    std::string compress_gzip(const std::string& data) {
         z_stream zs{};
-        deflateInit2(&zs, Z_BEST_COMPRESSION, Z_DEFLATED, 15 + 16, 8, Z_DEFAULT_STRATEGY);
+        if (deflateInit2(&zs, Z_BEST_COMPRESSION, Z_DEFLATED, 16 + MAX_WBITS, 8, Z_DEFAULT_STRATEGY) != Z_OK) {
+            throw std::runtime_error("deflateInit2 failed");
+        }
 
-        zs.next_in = (Bytef*)str.data();
-        zs.avail_in = str.size();
+        zs.next_in = (Bytef*)data.data();
+        zs.avail_in = data.size();
 
-        std::vector<unsigned char> outbuffer(1024);
-        std::vector<unsigned char> compressed;
+        std::string out;
+        char buffer[4096];
 
         int ret;
         do {
-            zs.next_out = outbuffer.data();
-            zs.avail_out = outbuffer.size();
+            zs.next_out = reinterpret_cast<Bytef*>(buffer);
+            zs.avail_out = sizeof(buffer);
+
             ret = deflate(&zs, Z_FINISH);
-            compressed.insert(compressed.end(), outbuffer.data(), outbuffer.data() + (outbuffer.size() - zs.avail_out));
+            out.append(buffer, sizeof(buffer) - zs.avail_out);
         } while (ret == Z_OK);
 
         deflateEnd(&zs);
@@ -30,6 +33,6 @@ namespace Compression
             throw std::runtime_error("gzip compression failed");
         }
 
-        return compressed;
+        return out;
     }
-}
+} 
