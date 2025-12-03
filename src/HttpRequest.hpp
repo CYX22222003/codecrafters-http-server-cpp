@@ -56,5 +56,39 @@ namespace HttpRequest {
                 std::vector<std::string> req_line_arr = StringUtils::split(request_line, " ");
                 requestLine = RequestLine(req_line_arr);
             }
+
+            static HttpRequest parse_request(std::string &req) {
+                std::vector<std::string> lines = StringUtils::split(req, "\r\n");
+                int n = lines.size();
+                if (n == 0) throw std::runtime_error("Empty request!");
+                
+                HttpRequest httpReq;
+                httpReq.setRequestLines(lines[0]);
+                
+                int i = 1;
+                while (i < n && !lines[i].empty()) {
+                    std::string line = lines[i];
+                    size_t pos = line.find(':');
+                    if (pos == std::string::npos) {
+                        throw std::runtime_error("Invalid header: missing ':'");
+                    }
+                    std::string key = line.substr(0, pos);
+                    std::string value = line.substr(pos + 1);
+                    httpReq.setHeader(key, value);
+                    i++;
+                }
+
+                if (i < n && lines[i].empty()) {
+                    i++;
+                }
+
+                std::string body;
+                while (i < n) {
+                    body += lines[i];
+                    i++;
+                }
+                httpReq.setBody(body);
+                return httpReq;
+            }
     };
 }

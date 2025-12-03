@@ -13,4 +13,14 @@ namespace StringUtils {
         result.push_back(s.substr(pos));
         return result;
     }
+
+    std::string showCRLF(const std::string& s) {
+        std::string result;
+        for (char c : s) {
+            if (c == '\r') result += "\\r";
+            else if (c == '\n') result += "\\n";
+            else result += c;
+        }
+        return result;
+    }
 }

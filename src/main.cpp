@@ -11,13 +11,7 @@
 #include "./HttpStatus.hpp"
 #include "./StringUtils.hpp"
 #include "./HttpRequest.hpp"
-
-HttpRequest::HttpRequest parse_request(std::string &req) {
-  std::vector<std::string> lines = StringUtils::split(req, "\r\n");
-  HttpRequest::HttpRequest httpReq;
-  httpReq.setRequestLines(lines[0]);
-  return httpReq;
-}
+#include "./handler.hpp"
 
 int main(int argc, char **argv) {
   // Flush after every std::cout / std::cerr
@@ -76,14 +70,9 @@ int main(int argc, char **argv) {
     ssize_t bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
     buffer[bytes_received] = '\0';
     std::string data(buffer);
-    HttpRequest::HttpRequest req = parse_request(data);
-    const char* response;
-    if (req.requestLine.target == "/") {
-      response = HttpStatus::OK.c_str();
-    } else {
-      response = HttpStatus::NotFound.c_str();
-    }
-    send(client_fd, response, strlen(response), 0);
+    HttpRequest::HttpRequest req = HttpRequest::HttpRequest::parse_request(data);
+    std::string response = handler::handle(req);
+    send(client_fd, response.c_str(), strlen(response.c_str()), 0);
   }
   close(server_fd);
 
