@@ -7,7 +7,7 @@
 #include <utility>
 #include <unordered_map>
 #include <stdexcept>
-
+#include "./StringUtils.hpp"
 namespace HttpResponse {
     class HttpHeaders {
         private:
@@ -15,14 +15,14 @@ namespace HttpResponse {
             std::vector<std::string> order_;
         public:
             void set(const std::string& key, const std::string& value) {
-                if (map_.find(key) == map_.end()) {
-                    order_.push_back(key);  // preserve insertion order
+                if (map_.find(StringUtils::lower(key)) == map_.end()) {
+                    order_.push_back(StringUtils::lower(key));  // preserve insertion order
                 }
-                map_[key] = value;
+                map_[StringUtils::lower(key)] = value;
             }
 
             const std::string& get(const std::string& key) const {
-                auto it = map_.find(key);
+                auto it = map_.find(StringUtils::lower(key));
                 if (it == map_.end()) {
                     throw std::runtime_error("Header not found: " + key);
                 }
@@ -30,7 +30,7 @@ namespace HttpResponse {
             }
 
             bool contains(const std::string& key) const {
-                return map_.find(key) != map_.end();
+                return map_.find(StringUtils::lower(key)) != map_.end();
             }
             
             std::string to_string() const {
@@ -69,8 +69,8 @@ namespace HttpResponse {
 
             void write_text_plain(const std::string& body) {
                 this->set_status(HttpStatus::OK);
-                this->set_header("Content-Type", "text/plain");
-                this->set_header("Content-Length", std::to_string(body.size()));
+                this->set_header("content-type", "text/plain");
+                this->set_header("content-length", std::to_string(body.size()));
                 this->set_body(body);
             }
 

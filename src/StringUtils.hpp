@@ -30,4 +30,11 @@ namespace StringUtils {
         if (start == std::string::npos) return "";
         return s.substr(start, end - start + 1);
     }
+
+    std::string lower(const std::string& str) {
+        std::string result = str;
+        std::transform(result.begin(), result.end(), result.begin(),
+                   [](unsigned char c){ return std::tolower(c); });
+        return result;
+    }
 }

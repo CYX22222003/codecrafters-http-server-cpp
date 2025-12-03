@@ -22,7 +22,7 @@ namespace handler {
             httpResponse.write_text_plain(StringUtils::trim(body));
         } else if (target == "/user-agent") {
             auto headers = req.headers;
-            auto it = headers.find("User-Agent");
+            auto it = headers.find("user-agent");
             if (it == headers.end()) throw std::runtime_error("Does not contain User-Agent body");
             std::string body = it->second;
             httpResponse.write_text_plain(StringUtils::trim(body));

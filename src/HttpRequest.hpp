@@ -45,7 +45,7 @@ namespace HttpRequest {
             }
 
             void setHeader(const std::string& name, const std::string& value) {
-                headers[name] = value;
+                headers[StringUtils::lower(name)] = value;
             }
 
             void setBody(const std::string& body) {
@@ -74,7 +74,7 @@ namespace HttpRequest {
                     }
                     std::string key = line.substr(0, pos);
                     std::string value = line.substr(pos + 1);
-                    httpReq.setHeader(key, value);
+                    httpReq.setHeader(StringUtils::lower(key), StringUtils::trim(value));
                     i++;
                 }
 

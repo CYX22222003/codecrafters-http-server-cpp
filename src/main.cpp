@@ -7,11 +7,22 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <thread>
 
 #include "./HttpStatus.hpp"
 #include "./StringUtils.hpp"
 #include "./HttpRequest.hpp"
 #include "./handler.hpp"
+
+void handle_client(int client_fd) {
+  char buffer[1024];
+  ssize_t bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+  buffer[bytes_received] = '\0';
+  std::string data(buffer);
+  HttpRequest::HttpRequest req = HttpRequest::HttpRequest::parse_request(data);
+  std::string response = handler::handle(req);
+  send(client_fd, response.c_str(), strlen(response.c_str()), 0);
+}
 
 int main(int argc, char **argv) {
   // Flush after every std::cout / std::cerr
@@ -58,7 +69,6 @@ int main(int argc, char **argv) {
   std::cout << "Waiting for a client to connect...\n";
   
   while (true) {
-    char buffer[1024];
     int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
     if (client_fd < 0) {
         perror("accept failed");
@@ -67,12 +77,8 @@ int main(int argc, char **argv) {
     }
     std::cout << "Client connected\n";
 
-    ssize_t bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
-    buffer[bytes_received] = '\0';
-    std::string data(buffer);
-    HttpRequest::HttpRequest req = HttpRequest::HttpRequest::parse_request(data);
-    std::string response = handler::handle(req);
-    send(client_fd, response.c_str(), strlen(response.c_str()), 0);
+    std::thread t(handle_client, client_fd);
+    t.detach();
   }
   close(server_fd);
 
