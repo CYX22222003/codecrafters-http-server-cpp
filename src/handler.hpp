@@ -16,8 +16,9 @@ namespace rules {
 }
 
 namespace handler {
-    std::string handle_get(HttpRequest::HttpRequest, std::string);
-    std::string handle_post(HttpRequest::HttpRequest, std::string);
+    std::string handle_get(HttpRequest::HttpRequest&, std::string&);
+    std::string handle_post(HttpRequest::HttpRequest&, std::string&);
+    void add_compression(HttpRequest::HttpRequest&, HttpResponse::HttpResponse&);
 
     std::string handle(HttpRequest::HttpRequest req, std::string directory) {
         std::string method = req.requestLine.method;
@@ -30,9 +31,11 @@ namespace handler {
         }
     }
 
-    std::string handle_get(HttpRequest::HttpRequest req, std::string directory) {
+    std::string handle_get(HttpRequest::HttpRequest& req, std::string& directory) {
         std::smatch match;
         HttpResponse::HttpResponse httpResponse;
+        add_compression(req, httpResponse);
+
         std::string target = req.requestLine.target;
         if (target == "/") {
             httpResponse.set_status(HttpStatus::OK);
@@ -55,9 +58,11 @@ namespace handler {
         return httpResponse.to_string();
     }
 
-    std::string handle_post(HttpRequest::HttpRequest req, std::string directory) {
+    std::string handle_post(HttpRequest::HttpRequest& req, std::string& directory) {
         std::smatch match;
         HttpResponse::HttpResponse httpResponse;
+        add_compression(req, httpResponse);
+
         std::string target = req.requestLine.target;
         if (std::regex_match(target, match, rules::files_r)) {
             std::string file_name = match[1];
@@ -66,6 +71,14 @@ namespace handler {
             return httpResponse.to_string();
         } else {
             throw std::runtime_error("Unspecified paths for posting");
+        }
+    }
+
+    void add_compression(HttpRequest::HttpRequest& req, HttpResponse::HttpResponse& resp) {
+        if (req.headers.find("accept-encoding") != req.headers.end()) {
+            if (StringUtils::trim(req.headers["accept-encoding"]) == "gzip") {
+                resp.set_header("content-encoding", req.headers["accept-encoding"]);
+            }
         }
     }
 }

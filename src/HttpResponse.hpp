@@ -34,6 +34,27 @@ namespace HttpResponse {
             bool contains(const std::string& key) const {
                 return map_.find(StringUtils::lower(key)) != map_.end();
             }
+
+            void insert_at(const std::string& key, const std::string& value, size_t pos) {
+                std::string lower_key = StringUtils::lower(key);
+
+                if (map_.find(lower_key) == map_.end()) {
+                    if (pos > order_.size()) {
+                        pos = order_.size();
+                    }
+                    order_.insert(order_.begin() + pos, lower_key);
+                } else {
+                    auto it = std::find(order_.begin(), order_.end(), lower_key);
+                    if (it != order_.end()) {
+                        order_.erase(it);
+                        if (pos > order_.size()) {
+                            pos = order_.size();
+                        }
+                        order_.insert(order_.begin() + pos, lower_key);
+                    }
+                }
+                map_[lower_key] = value;
+            }
             
             std::string to_string() const {
                 std::ostringstream oss;
