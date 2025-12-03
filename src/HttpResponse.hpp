@@ -10,6 +10,7 @@
 
 #include "./StringUtils.hpp"
 #include "./HttpStatus.hpp"
+#include "./CompressionUtils.hpp"
 namespace HttpResponse {
     class HttpHeaders {
         private:
@@ -95,6 +96,14 @@ namespace HttpResponse {
                 this->set_header("content-type", "text/plain");
                 this->set_header("content-length", std::to_string(body.size()));
                 this->set_body(body);
+            }
+
+            void write_compressed_text(const std::string& body) {
+                std::vector<unsigned char> compressed_body = Compression::gzip_compress(body);
+                this->set_status(HttpStatus::OK);
+                this->set_header("content-type", "text/plain");
+                this->set_header("content-length", std::to_string(compressed_body.size()));
+                this->set_body(std::string(compressed_body.begin(), compressed_body.end()));
             }
 
             std::string to_string() const {

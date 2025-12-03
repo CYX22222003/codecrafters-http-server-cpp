@@ -6,41 +6,28 @@
 
 namespace Compression
 {
-    std::string gzip_compress_string(const std::string &data, int level = Z_BEST_COMPRESSION)
-    {
-        z_stream zs;
-        std::memset(&zs, 0, sizeof(zs));
+    std::vector<unsigned char> gzip_compress(const std::string& str) {
+        z_stream zs{};
+        deflateInit2(&zs, Z_BEST_COMPRESSION, Z_DEFLATED, 15 + 16, 8, Z_DEFAULT_STRATEGY);
 
-        if (deflateInit2(&zs, level, Z_DEFLATED, 15 + 16, 8, Z_DEFAULT_STRATEGY) != Z_OK)
-        {
-            throw std::runtime_error("deflateInit2 failed while compressing.");
-        }
+        zs.next_in = (Bytef*)str.data();
+        zs.avail_in = str.size();
 
-        zs.next_in = reinterpret_cast<Bytef *>(const_cast<char *>(data.data()));
-        zs.avail_in = static_cast<uInt>(data.size());
-
-        std::string compressed;
-        char buffer[32768];
+        std::vector<unsigned char> outbuffer(1024);
+        std::vector<unsigned char> compressed;
 
         int ret;
-        do
-        {
-            zs.next_out = reinterpret_cast<Bytef *>(buffer);
-            zs.avail_out = sizeof(buffer);
-
+        do {
+            zs.next_out = outbuffer.data();
+            zs.avail_out = outbuffer.size();
             ret = deflate(&zs, Z_FINISH);
-
-            if (compressed.size() < zs.total_out)
-            {
-                compressed.append(buffer, sizeof(buffer) - zs.avail_out);
-            }
+            compressed.insert(compressed.end(), outbuffer.data(), outbuffer.data() + (outbuffer.size() - zs.avail_out));
         } while (ret == Z_OK);
 
         deflateEnd(&zs);
 
-        if (ret != Z_STREAM_END)
-        {
-            throw std::runtime_error("Exception during zlib compression");
+        if (ret != Z_STREAM_END) {
+            throw std::runtime_error("gzip compression failed");
         }
 
         return compressed;

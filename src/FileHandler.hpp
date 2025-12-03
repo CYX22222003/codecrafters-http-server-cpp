@@ -37,14 +37,17 @@ namespace FileHandler {
                     buffer << infile.rdbuf();
                     std::string file_content = buffer.str();
                     
-                    if (is_compressed) {
-                        file_content = Compression::gzip_compress_string(file_content);
-                    }
+                    
 
                     response.set_status(HttpStatus::OK);
                     response.set_header("Content-Type", "application/octet-stream");
                     response.set_header("Content-Length", std::to_string(file_content.size()));
-                    response.set_body(file_content);
+                    if (is_compressed) {
+                        std::vector<unsigned char> compressed_body = Compression::gzip_compress(file_content);
+                        response.set_body(std::string(compressed_body.begin(), compressed_body.end()));
+                    } else {
+                        response.set_body(file_content);
+                    }
                 } else {
                     response.set_status(HttpStatus::NotFound);
                 }
