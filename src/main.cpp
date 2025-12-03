@@ -24,13 +24,10 @@ bool send_full_response(int client_fd, const std::string& response) {
         if (sent > 0) {
             total_sent += sent;
         } else if (sent == 0) {
-            // connection closed by client
             fprintf(stderr, "Connection closed by peer\n");
             return false;
         } else {
-            // error
             if (errno == EINTR || errno == EAGAIN) {
-                // interrupted or temporarily unavailable, try again
                 continue;
             }
             perror("send failed");
@@ -38,17 +35,23 @@ bool send_full_response(int client_fd, const std::string& response) {
         }
     }
 
-    return true; // all bytes sent
+    return true;
 }
 
 void handle_client(int client_fd, std::string directory) {
-  char buffer[1024];
-  ssize_t bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
-  buffer[bytes_received] = '\0';
-  std::string data(buffer);
-  HttpRequest::HttpRequest req = HttpRequest::HttpRequest::parse_request(data);
-  std::string response = handler::handle(req, directory);
-  send_full_response(client_fd, response);
+  while (true) {
+    char buffer[4069];
+    ssize_t bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+    buffer[bytes_received] = '\0';
+    std::string data(buffer);
+    HttpRequest::HttpRequest req = HttpRequest::HttpRequest::parse_request(data);
+    std::string response = handler::handle(req, directory);
+    send_full_response(client_fd, response);
+    if (handler::isClose(req)) {
+      break;
+    }
+  }
+  close(client_fd);
 }
 
 int main(int argc, char **argv) {

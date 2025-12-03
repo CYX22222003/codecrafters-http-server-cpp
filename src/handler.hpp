@@ -20,6 +20,14 @@ namespace handler {
     std::string handle_get(HttpRequest::HttpRequest&, std::string&);
     std::string handle_post(HttpRequest::HttpRequest&, std::string&);
     bool add_compression(HttpRequest::HttpRequest&, HttpResponse::HttpResponse&);
+    
+    bool isClose(HttpRequest::HttpRequest req) {
+        auto headers = req.headers;
+        if (headers.find("connection") != headers.end()) {
+            return headers["connection"] == "close";
+        }
+        return false;
+    }
 
     std::string handle(HttpRequest::HttpRequest req, std::string directory) {
         std::string method = req.requestLine.method;
