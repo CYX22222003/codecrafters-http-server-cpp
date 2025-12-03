@@ -1,5 +1,5 @@
-#pragma one
-#include "./HttpStatus.hpp"
+#pragma once
+
 #include <string>
 #include <unordered_map>
 #include <iostream>
@@ -7,7 +7,9 @@
 #include <utility>
 #include <unordered_map>
 #include <stdexcept>
+
 #include "./StringUtils.hpp"
+#include "./HttpStatus.hpp"
 namespace HttpResponse {
     class HttpHeaders {
         private:

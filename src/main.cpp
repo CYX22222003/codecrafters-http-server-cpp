@@ -14,17 +14,19 @@
 #include "./HttpRequest.hpp"
 #include "./handler.hpp"
 
-void handle_client(int client_fd) {
+void handle_client(int client_fd, std::string directory) {
   char buffer[1024];
   ssize_t bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
   buffer[bytes_received] = '\0';
   std::string data(buffer);
   HttpRequest::HttpRequest req = HttpRequest::HttpRequest::parse_request(data);
-  std::string response = handler::handle(req);
+  std::string response = handler::handle(req, directory);
   send(client_fd, response.c_str(), strlen(response.c_str()), 0);
 }
 
 int main(int argc, char **argv) {
+  std::string directory = (argc > 2) ? argv[2] : ""; 
+
   // Flush after every std::cout / std::cerr
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
@@ -77,7 +79,7 @@ int main(int argc, char **argv) {
     }
     std::cout << "Client connected\n";
 
-    std::thread t(handle_client, client_fd);
+    std::thread t(handle_client, client_fd, directory);
     t.detach();
   }
   close(server_fd);
