@@ -108,7 +108,7 @@ namespace HttpResponse {
             }
 
             void close_connection() {
-                this->set_header("connection:", "close");
+                this->set_header("connection", "close");
             }
 
             std::string to_string() const {
