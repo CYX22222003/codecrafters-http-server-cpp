@@ -39,20 +39,53 @@ bool send_full_response(int client_fd, const std::string& response) {
 }
 
 void handle_client(int client_fd, std::string directory) {
-  while (true) {
-    char buffer[4069];
-    ssize_t bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
-    buffer[bytes_received] = '\0';
-    std::string data(buffer);
-    HttpRequest::HttpRequest req = HttpRequest::HttpRequest::parse_request(data);
-    std::string response = handler::handle(req, directory);
-    send_full_response(client_fd, response);
-    if (handler::isClose(req)) {
-      break;
+    std::string buffer;
+    HttpRequest::HttpRequest current_request; // persistent for partial request
+    bool headers_parsed = false;
+    size_t expected_length = 0;
+
+    while (true) {
+        char tmp[4096];
+        ssize_t n = recv(client_fd, tmp, sizeof(tmp), 0);
+        if (n <= 0) break;
+        buffer.append(tmp, n);
+
+        while (true) {
+            if (!headers_parsed) {
+                size_t header_end = buffer.find("\r\n\r\n");
+                if (header_end == std::string::npos) break; 
+                std::string headers_with_request_line = buffer.substr(0, header_end + 4);
+                current_request = HttpRequest::HttpRequest::from_headers(headers_with_request_line);
+
+                buffer.erase(0, header_end + 4); 
+                expected_length = current_request.getContentLength();
+                headers_parsed = true;
+            }
+
+            size_t to_take = std::min(expected_length - current_request.body.size(), buffer.size());
+            current_request.body.append(buffer.substr(0, to_take));
+            buffer.erase(0, to_take);
+
+            if (current_request.body.size() < expected_length) {
+                break;
+            }
+
+            std::string response = handler::handle(current_request, directory);
+            send_full_response(client_fd, response);
+
+            if (handler::isClose(current_request)) {
+              close(client_fd);
+              return;
+            }
+
+            current_request = HttpRequest::HttpRequest();
+            headers_parsed = false;
+            expected_length = 0;
+        }
     }
-  }
-  close(client_fd);
+    close(client_fd);
 }
+
 
 int main(int argc, char **argv) {
   std::string directory = (argc > 2) ? argv[2] : ""; 
